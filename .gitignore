@@ -1,5 +1,6 @@
 *
 !Library/
+!Library/string_utils.hpp
 !src/
 !src/nhom17.cpp
 !.gitignore
