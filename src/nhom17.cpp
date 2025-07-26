@@ -95,34 +95,34 @@ void XoaMayBay(DSMB &dsmb);
 void HieuChinhMayBay(DSMB &dsmb);
 
 // b) Quản lý chuyến bay
-void themChuyenBay(PTRCB &dscb, DSMB &dsmb);
-void suaNgayGioChuyenBay(PTRCB &dscb);
-void huyChuyenBay(PTRCB &dscb);
+void ThemChuyenBay(PTRCB &dscb, DSMB &dsmb);
+void HieuChinhNgayGioChuyenBay(PTRCB &dscb);
+void HuyChuyenBay(PTRCB &dscb);
 
 // c) Đặt vé
-void datVe(PTRCB &dscb, treeHK &dshk, DSMB &dsmb);
+void DatVe(PTRCB &dscb, treeHK &dshk, DSMB &dsmb);
 
 // d) Hủy vé
-void huyVe(PTRCB &dscb);
+void HuyVe(PTRCB &dscb);
 
 // e) In danh sách hành khách của một chuyến bay
-void inDSHanhKhach(PTRCB dscb);
+void InDSHanhKhach(PTRCB dscb);
 
 // f) In danh sách chuyến bay trong ngày dd/mm/yyyy đến nơi XXXX còn vé
-void inDSChuyenBayTheoNgayNoiDen(PTRCB dscb);
+void InDSChuyenBayTheoNgayNoiDen(PTRCB dscb);
 
 // g) In danh sách vé còn trống của chuyến bay X
-void inVesTrong(PTRCB dscb);
+void InVesTrong(PTRCB dscb);
 
 // h) Thống kê số lượt thực hiện chuyến bay theo máy bay
-void thongKeLuotBay(DSMB dsmb, PTRCB dscb);
+void ThongKeLuotBay(DSMB dsmb, PTRCB dscb);
 
 // Hành khách: BST
-void themHanhKhach(treeHK &root, HanhKhach hk);
-treeHK timHanhKhach(treeHK root, const char *soCMND);
+void ThemHanhKhach(treeHK &root, HanhKhach hk);
+treeHK TimHanhKhach(treeHK root, const char *soCMND);
 
 // Menu
-void menu();
+void Menu();
 
 int main()
 {
@@ -134,7 +134,7 @@ int main()
 
     do
     {
-        menu();
+        Menu();
         cin >> luaChon;
         cin.ignore(1000, '\n');
 
@@ -174,7 +174,19 @@ int main()
             }
             }
         }
+        case 'b':
+        {
+            cout << "=============" << endl;
+            cout << "1. Them chuyen bay" << endl;
+            cout << "2. Hieu chinh chuyen bay" << endl;
+            cout << "3. Huy chuyen bay" << endl;
+        case 1:
+        {
 
+            break;
+        }
+        break;
+        }
         case 0:
         {
             cout << "Dang thoat chuong trinh...\n";
@@ -189,7 +201,7 @@ int main()
     return 0;
 }
 
-void menu()
+void Menu()
 {
     cout << "\n========== MENU CHUONG TRINH ==========";
     cout << "\na. Cap nhat danh sach may bay (Them/Hieu chinh/Xoa)";
@@ -383,4 +395,8 @@ void XoaMayBay(DSMB &dsmb)
     dsmb.n--;
 
     cout << "Da xoa may bay co so hieu \"" << soHieuCanXoa << "\" thanh cong.\n";
+}
+
+void ThemChuyenBay(PTRCB &dscb, DSMB &dsmb)
+{
 }
