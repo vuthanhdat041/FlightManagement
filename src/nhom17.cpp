@@ -11,7 +11,7 @@ using namespace std;
 // a) Quản lý máy bay (thêm / xóa / hiệu chỉnh)
 void NhapMayBay(MayBay &mb);
 void XemDSMB(DSMB dsmb);
-void themMayBay(DSMB &dsmb);
+void ThemMayBay(DSMB &dsmb);
 void XoaMayBay(DSMB &dsmb);
 void HieuChinhMayBay(DSMB &dsmb);
 
@@ -81,7 +81,8 @@ int main()
             {
             case 1:
             {
-                themMayBay(dsmb);
+                ThemMayBay(dsmb);
+                XemDSMB(dsmb);
                 break;
             }
             case 2:
@@ -104,10 +105,16 @@ int main()
         }
         case 'b':
         {
+            if (dsmb.n == 0)
+            {
+                cout << "Danh sach may bay rong. Khong the dung chuc nang nay!\n";
+                break;
+            }
             cout << "=============" << endl;
             cout << "1. Them chuyen bay" << endl;
             cout << "2. Hieu chinh chuyen bay" << endl;
             cout << "3. Huy chuyen bay" << endl;
+
             int choiceB;
             cin >> choiceB;
             switch (choiceB)
@@ -154,58 +161,53 @@ void Menu()
 
 void NhapMayBay(MayBay &mb, DSMB dsmb)
 {
-    char temp_soHieuMB[16];
+    char temp_soHieuMB[MAX_SO_HIEU_MB];
     bool valid = false;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
     while (!valid)
     {
-        cout << "Nhap so hieu may bay (dang VN-<chu so>, ví du: VN-1234): ";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "Nhap so hieu may bay dạng <Kí tự 1><Kí tự 2>-<4 Chữ số>, ví dụ: VN-1234): ";
         cin.getline(temp_soHieuMB, sizeof(temp_soHieuMB));
+        // Loại bỏ hết dấu cách
         RemoveAllSpaces(temp_soHieuMB);
         // Chuyển toàn bộ thành in hoa để chống nhập vn-1234, Vn-1234...
         UpperCase(temp_soHieuMB);
 
-        // Kiểm tra độ dài tối thiểu (3 ký tự cho "VN-" + ít nhất 1 chữ số)
-        int len = strlen(temp_soHieuMB);
-        if (len < 4)
+        if (KiemTraDoDai(temp_soHieuMB, 4, 7) == 0 ||
+            !(isalpha(temp_soHieuMB[0]) && isalpha(temp_soHieuMB[1]) && temp_soHieuMB[2] == '-') ||
+            KiemTraPhanSauLaChuSo(3, strlen(temp_soHieuMB), temp_soHieuMB) == false)
         {
-            cout << "  >> Nhập quá ngắn!\n";
+            cout << "  >> Sai định dạng!\n";
             continue;
         }
-        // Kiểm tra tiền tố "VN-"
-        if (strncmp(temp_soHieuMB, "VN-", 3) != 0)
-        {
-            cout << "  >> Phải bắt đầu bằng \"VN-\"!\n";
-            continue;
-        }
-        // Kiểm tra phần sau đều là chữ số
+        // Duyệt kiểm tra trùng soHieuMB
         valid = true;
-        for (int i = 3; i < len; i++)
+        for (int i = 0; i < dsmb.n; i++)
         {
-            if (!isdigit(static_cast<unsigned char>(temp_soHieuMB[i])))
+            if (strcmp(dsmb.nodes[i]->soHieuMB, temp_soHieuMB) == 0)
             {
-                cout << "  >> Phải là chữ số ở sau \"VN-\"!\n";
+                cout << "Loi: may bay co so hieu \"" << temp_soHieuMB
+                     << "\" da ton tai. Khong the them.\n";
                 valid = false;
                 break;
             }
         }
     }
 
-    // Duyệt kiểm tra trùng soHieuMB
-    for (int i = 0; i < dsmb.n; i++)
-    {
-        if (strcmp(dsmb.nodes[i]->soHieuMB, temp_soHieuMB) == 0)
-        {
-            cout << "Loi: may bay co so hieu \"" << temp_soHieuMB
-                 << "\" da ton tai. Khong the them.\n";
-            return;
-        }
-    }
-
     strcpy(mb.soHieuMB, temp_soHieuMB);
 
-    cout << "Nhap loai may bay: ";
-    cin.getline(mb.loaiMB, 41);
+    while (true)
+    {
+        cout << "Nhap loai may bay: ";
+        cin.getline(mb.loaiMB, MAX_LOAI_MB);
+        if (IsEmpty(mb.loaiMB) || strcmp(mb.loaiMB, "0") == 0 || !isalpha(mb.loaiMB[0]))
+        {
+            cout << "Vui lòng nhập lại!" << endl;
+            continue;
+        }
+        break;
+    }
     NormalizeSpaces(mb.loaiMB);
     UpperCase(mb.loaiMB);
     // Nhập số chỗ với kiểm tra >= 20
@@ -222,25 +224,35 @@ void NhapMayBay(MayBay &mb, DSMB dsmb)
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 }
 
-void themMayBay(DSMB &dsmb)
+void ThemMayBay(DSMB &dsmb)
 {
-    if (dsmb.n >= MAX_MB)
+    while (true)
     {
-        cout << "Danh sach may bay da day, khong the them nua!\n";
-        return;
+        if (dsmb.n >= MAX_MB)
+        {
+            cout << "Danh sach may bay da day, khong the them nua!\n";
+            return;
+        }
+
+        // Cấp phát và nhập thông tin
+        MayBay *mb = new MayBay;
+        NhapMayBay(*mb, dsmb);
+
+        // Nếu không trùng thì thêm vào
+        dsmb.nodes[dsmb.n++] = mb;
+        cout << "Da them may bay thanh cong\n";
+
+        // Lựa nhọn nhập tiếp hay không
+        char tiepTuc;
+        cout << "Ban co muon them may bay tiep khong? (y/n): ";
+        cin >> tiepTuc;
+        if (tiepTuc != 'y' && tiepTuc != 'Y')
+            break;
     }
-
-    // Cấp phát và nhập thông tin
-    MayBay *mb = new MayBay;
-    NhapMayBay(*mb, dsmb);
-
-    // Nếu không trùng thì thêm vào
-    dsmb.nodes[dsmb.n++] = mb;
-    cout << "Da them may bay thanh cong\n";
 }
 void XemDSMB(DSMB dsmb)
 {
-    MayBay *mb = new MayBay;
+
     cout << "So hieu   Loai May bay   So cho: " << endl;
 
     for (int i = 0; i < dsmb.n; i++)
@@ -251,213 +263,185 @@ void XemDSMB(DSMB dsmb)
 }
 void HieuChinhMayBay(DSMB &dsmb)
 {
-    char soHieuCanSua[16];
-    bool valid = false;
+    // ===== B1. Tìm máy bay cần sửa ==========================
+    char soHieuCanSua[MAX_SO_HIEU_MB];
+    int index = -1;
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-    while (!valid)
+    while (true)
     {
-        cout << "Nhap so hieu may bay muon chinh sua (dang VN-<chu so>, ví du: VN-1234): ";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cin.getline(soHieuCanSua, sizeof(soHieuCanSua));
+        cout << "Nhap so hieu may bay dang <KT1><KT2>-<4 so> (VD: VN-1234): ";
+        cin.getline(soHieuCanSua, MAX_SO_HIEU_MB);
         RemoveAllSpaces(soHieuCanSua);
-        // Chuyển toàn bộ thành in hoa để chống nhập vn-1234, Vn-1234...
         UpperCase(soHieuCanSua);
 
-        // Kiểm tra độ dài tối thiểu (3 ký tự cho "VN-" + ít nhất 1 chữ số)
-        int len = strlen(soHieuCanSua);
-        if (len < 4)
+        // ─ Định dạng
+        if (KiemTraDoDai(soHieuCanSua, 4, 7) == 0 ||
+            !(isalpha(soHieuCanSua[0]) && isalpha(soHieuCanSua[1]) && soHieuCanSua[2] == '-') ||
+            !KiemTraPhanSauLaChuSo(3, strlen(soHieuCanSua), soHieuCanSua))
         {
-            cout << "  >> Nhập quá ngắn!\n";
+            cout << "  >> Sai dinh dang!\n";
             continue;
         }
-        // Kiểm tra tiền tố "VN-"
-        if (strncmp(soHieuCanSua, "VN-", 3) != 0)
-        {
-            cout << "  >> Phải bắt đầu bằng \"VN-\"!\n";
-            continue;
-        }
-        // Kiểm tra phần sau đều là chữ số
-        valid = true;
-        for (int i = 3; i < len; i++)
-        {
-            if (!isdigit(static_cast<unsigned char>(soHieuCanSua[i])))
+
+        // ─ Tìm trong danh sách
+
+        for (int i = 0; i < dsmb.n; ++i)
+            if (strcmp(dsmb.nodes[i]->soHieuMB, soHieuCanSua) == 0)
             {
-                cout << "  >> Phải là chữ số ở sau \"VN-\"!\n";
-                valid = false;
+                index = i;
                 break;
             }
-        }
-    }
-    cin.getline(soHieuCanSua, 16);
 
-    int index = -1;
-
-    for (int i = 0; i < dsmb.n; i++)
-    {
-        if (strcmp(dsmb.nodes[i]->soHieuMB, soHieuCanSua) == 0)
+        if (index == -1)
         {
-            index = i;
+            cout << "  >> Khong tim thay \"" << soHieuCanSua << "\". Vui long nhap lai.\n";
+            continue;
+        }
+        break;
+    }
+
+    cout << "Nhap thong tin moi (nhap 0 de giu nguyen).\n";
+
+    // ===== B2. Sửa SỐ HIỆU =================================
+    // ... đã tìm được `index` của máy bay cần sửa
+
+    char soHieuMoi[MAX_SO_HIEU_MB];
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    while (true)
+    {
+        cout << "So hieu moi (0 = giu nguyen): ";
+        cin.getline(soHieuMoi, MAX_SO_HIEU_MB);
+        RemoveAllSpaces(soHieuMoi);
+        UpperCase(soHieuMoi);
+
+        // 1) Nếu người dùng nhập "0", thoát vòng, giữ nguyên mã cũ
+        if (strcmp(soHieuMoi, "0") == 0)
+        {
             break;
         }
-    }
 
-    if (index == -1)
-    {
-        cout << "Khong tim thay may bay voi so hieu \"" << soHieuCanSua << "\".\n";
-        return;
-    }
-    MayBay *mb = dsmb.nodes[index];
-    cout << "Nhap thong tin moi (nhap 0 de giu nguyen):\n";
-
-    // So hieu moi
-    char soHieuMoi[16];
-
-    cout << "So hieu moi (nhan 0 de khong chinh sua): ";
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    cin.getline(soHieuMoi, 16);
-
-    if (strcmp(soHieuMoi, "0") != 0)
-    {
-        bool valid = false;
-
-        while (!valid)
+        // 2) Kiểm tra định dạng
+        if (KiemTraDoDai(soHieuMoi, 4, 7) == 0 ||
+            !(isalpha(soHieuMoi[0]) && isalpha(soHieuMoi[1]) && soHieuMoi[2] == '-') ||
+            !KiemTraPhanSauLaChuSo(3, strlen(soHieuMoi), soHieuMoi))
         {
-
-            RemoveAllSpaces(soHieuMoi);
-            // Chuyển toàn bộ thành in hoa để chống nhập vn-1234, Vn-1234...
-            UpperCase(soHieuMoi);
-
-            // Kiểm tra độ dài tối thiểu (3 ký tự cho "VN-" + ít nhất 1 chữ số)
-            int len = strlen(soHieuMoi);
-            if (len < 4)
-            {
-                cout << "  >> Nhập quá ngắn!\n";
-                continue;
-            }
-            // Kiểm tra tiền tố "VN-"
-            if (strncmp(soHieuMoi, "VN-", 3) != 0)
-            {
-                cout << "  >> Phải bắt đầu bằng \"VN-\"!\n";
-                continue;
-            }
-            // Kiểm tra phần sau đều là chữ số
-            valid = true;
-            for (int i = 3; i < len; i++)
-            {
-                if (!isdigit(static_cast<unsigned char>(soHieuMoi[i])))
-                {
-                    cout << "  >> Phải là chữ số ở sau \"VN-\"!\n";
-                    valid = false;
-                    break;
-                }
-            }
+            cout << "  >> Sai dinh dang! Nhap lai.\n";
+            continue;
         }
-        // Kiểm tra trùng số hiệu
-        for (int i = 0; i < dsmb.n; i++)
+
+        // 3) Kiểm tra trùng với các máy bay khác
+        bool trung = false;
+        for (int i = 0; i < dsmb.n; ++i)
         {
             if (i != index && strcmp(dsmb.nodes[i]->soHieuMB, soHieuMoi) == 0)
             {
-                cout << "So hieu bi trung voi may bay khac. Khong cap nhat.\n";
-                return;
+                cout << "  >> So hieu da ton tai! Nhap lai.\n";
+                trung = true;
+                break;
             }
         }
-        strcpy(mb->soHieuMB, soHieuMoi);
+        if (trung)
+            continue;
+
+        // 4) Đến đây là hợp lệ → cập nhật và thoát
+        strcpy(dsmb.nodes[index]->soHieuMB, soHieuMoi);
+        break;
     }
 
-    // Loai may bay
-    char loaiMoi[41];
-    cout << "Loai may bay moi: ";
-    cin.getline(loaiMoi, 41);
-    NormalizeSpaces(loaiMoi);
-    UpperCase(loaiMoi);
+    // ===== B3. Sửa LOẠI MÁY BAY =============================
+    char loaiMoi[MAX_LOAI_MB];
+    cout << "Loai may bay moi (0 = giu nguyen): ";
+    cin.getline(loaiMoi, MAX_LOAI_MB);
+    RemoveAllSpaces(loaiMoi);
+
     if (strcmp(loaiMoi, "0") != 0)
     {
-        strcpy(mb->loaiMB, loaiMoi);
+        NormalizeSpaces(loaiMoi);
+        UpperCase(loaiMoi);
+        if (strlen(loaiMoi) == 0)
+            cout << "  >> Bo qua vi de trong.\n";
+        else
+            strcpy(dsmb.nodes[index]->loaiMB, loaiMoi);
     }
 
-    // So cho
-    int soChoMoi;
-    do
+    // ===== B4. Sửa SỐ CHỖ ===================================
+    int soChoMoi = 0;
+    while (true)
     {
-        cout << "So cho moi (>= 20, nhap 0 de giu nguyen): ";
-        cin >> soChoMoi;
-        if (soChoMoi == 0)
+        cout << "So cho moi (>=20, 0 = giu nguyen): ";
+        if (!(cin >> soChoMoi)) // nhập không phải số
         {
-            // Giữ nguyên
-            break;
+            cin.clear();
+            cout << "  >> Phai nhap so!\n";
         }
-        else if (soChoMoi >= 20)
+        else if (soChoMoi == 0 || soChoMoi >= 20)
         {
-            mb->soCho = soChoMoi;
+            if (soChoMoi >= 20)
+                dsmb.nodes[index]->soCho = soChoMoi;
             break;
         }
         else
         {
-            cout << "Loi: so cho phai >= 20 hoac nhap 0 de giu nguyen. Vui long nhap lai.\n";
+            cout << "  >> So cho phai >= 20.\n";
         }
-    } while (true);
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // dọn bộ đệm trước khi lặp
+    }
+    cin.ignore(numeric_limits<streamsize>::max(), '\n'); // dọn bộ đệm sau cùng
 
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-    cout << "Da cap nhat thong tin may bay thanh cong!\n";
+    cout << ">> Da cap nhat thong tin may bay thanh cong!\n";
 }
 
 void XoaMayBay(DSMB &dsmb)
 {
-    char soHieuCanXoa[16];
+    // ===== B1. Tìm máy bay cần xoá ==========================
+    char soHieuCanXoa[MAX_SO_HIEU_MB];
+    int index = -1;
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-    bool valid = false;
-    while (!valid)
+    while (true)
     {
-        cout << "Nhap so hieu may bay muon xoa (dang VN-<chu so>, ví du: VN-1234): ";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cin.getline(soHieuCanXoa, sizeof(soHieuCanXoa));
+        cout << "Nhap so hieu may bay dang <KT1><KT2>-<4 so> (VD: VN-1234): ";
+        cin.getline(soHieuCanXoa, MAX_SO_HIEU_MB);
         RemoveAllSpaces(soHieuCanXoa);
-        // Chuyển toàn bộ thành in hoa để chống nhập vn-1234, Vn-1234...
         UpperCase(soHieuCanXoa);
 
-        // Kiểm tra độ dài tối thiểu (3 ký tự cho "VN-" + ít nhất 1 chữ số)
-        int len = strlen(soHieuCanXoa);
-        if (len < 4)
+        // ─ Định dạng
+        if (KiemTraDoDai(soHieuCanXoa, 4, 7) == 0 ||
+            !(isalpha(soHieuCanXoa[0]) && isalpha(soHieuCanXoa[1]) && soHieuCanXoa[2] == '-') ||
+            !KiemTraPhanSauLaChuSo(3, strlen(soHieuCanXoa), soHieuCanXoa))
         {
-            cout << "  >> Nhập quá ngắn!\n";
+            cout << "  >> Sai dinh dang!\n";
             continue;
         }
-        // Kiểm tra tiền tố "VN-"
-        if (strncmp(soHieuCanXoa, "VN-", 3) != 0)
-        {
-            cout << "  >> Phải bắt đầu bằng \"VN-\"!\n";
-            continue;
-        }
-        // Kiểm tra phần sau đều là chữ số
-        valid = true;
-        for (int i = 3; i < len; i++)
-        {
-            if (!isdigit(static_cast<unsigned char>(soHieuCanXoa[i])))
+
+        // ─ Tìm trong danh sách
+
+        for (int i = 0; i < dsmb.n; ++i)
+            if (strcmp(dsmb.nodes[i]->soHieuMB, soHieuCanXoa) == 0)
             {
-                cout << "  >> Phải là chữ số ở sau \"VN-\"!\n";
-                valid = false;
+                index = i;
                 break;
             }
-        }
-    }
 
-    int index = -1;
-    for (int i = 0; i < dsmb.n; i++)
-    {
-        if (strcmp(dsmb.nodes[i]->soHieuMB, soHieuCanXoa) == 0)
+        if (index == -1)
         {
-            index = i;
-            break;
+            cout << "  >> Khong tim thay \"" << soHieuCanXoa << "\". Vui long nhap lai.\n";
+            continue;
         }
+        break; // đã tìm thấy
     }
+    char choice;
+    cout << "Ban co that su muon xoa may bay \"" << soHieuCanXoa << "\"? (y/N): ";
+    cin >> choice;
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-    if (index == -1)
+    if (choice != 'y' && choice != 'Y')
     {
-        cout << "Khong tim thay may bay co so hieu \"" << soHieuCanXoa << "\".\n";
+        cout << "Huy xoa may bay.\n";
         return;
     }
-
     // Xóa máy bay khỏi mảng
     delete dsmb.nodes[index];
 
@@ -547,6 +531,7 @@ bool isValidDateTime(const ThoiGian &t)
 }
 void ThemChuyenBay(PTRCB &dscb, DSMB &dsmb)
 {
+
     ChuyenBay cb;
     char maCB[16];
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -554,40 +539,39 @@ void ThemChuyenBay(PTRCB &dscb, DSMB &dsmb)
     bool valid = false;
     while (!valid)
     {
-        cout << "Nhap ma chuyen bay dinh dang 'VN <Chữ số>': (ma duy nhat): ";
+        cout << "Nhap ma chuyen bay dinh dang '<2 chu cai> <chu so>': ";
         cin.getline(maCB, sizeof(maCB));
         NormalizeSpaces(maCB);
-        // Chuyển toàn bộ thành in hoa để chống nhập vn 1234, Vn 1234...
         UpperCase(maCB);
 
-        // Kiểm tra độ dài tối thiểu (3 ký tự cho "VN " + ít nhất 1 chữ số)
         int len = strlen(maCB);
         if (len < 4)
         {
-            cout << "  >> Nhập lại, tối thiểu 4 kí tự\n";
+            cout << "  >> Nhap lai, toi thieu 4 ky tu\n";
             continue;
         }
-        // Kiểm tra tiền tố "VN "
-        if (strncmp(maCB, "VN ", 3) != 0)
+        // kiểm tra 2 ký tự đầu phải là chữ cái, ký tự thứ 3 phải là khoảng trắng
+        if (!isalpha(static_cast<unsigned char>(maCB[0])) ||
+            !isalpha(static_cast<unsigned char>(maCB[1])) ||
+            maCB[2] != ' ')
         {
-            cout << "  >> Phải bắt đầu bằng \"VN \"!\n";
+            cout << "  >> Phai bat dau 2 chu cai va 1 dau cach!\n";
             continue;
         }
-        // Kiểm tra phần sau đều là chữ số
+        // phần sau (từ vị trí 3) phải là chữ số
         valid = true;
         for (int i = 3; i < len; i++)
         {
             if (!isdigit(static_cast<unsigned char>(maCB[i])))
             {
-                cout << "  >> Phải là chữ số ở sau \"VN \"!\n";
+                cout << "  >> Phai la chu so o phia sau!\n";
                 valid = false;
                 break;
             }
         }
     }
-
-    // Kiểm tra trùng mã chuyến bay
-    for (PTRCB p = dscb; p != nullptr; p = p->next)
+    // kiểm tra trùng
+    for (PTRCB p = dscb; p; p = p->next)
     {
         if (strcmp(p->cb.maCB, maCB) == 0)
         {
@@ -596,13 +580,13 @@ void ThemChuyenBay(PTRCB &dscb, DSMB &dsmb)
         }
     }
     strcpy(cb.maCB, maCB);
-    // Nhập thời gian
 
+    // Nhập thời gian
     do
     {
         cout << "Nhap thoi gian khoi hanh (gio phut ngay thang nam): ";
         cin >> cb.ngayGioKhoiHanh.gio >> cb.ngayGioKhoiHanh.phut >> cb.ngayGioKhoiHanh.ngay >> cb.ngayGioKhoiHanh.thang >> cb.ngayGioKhoiHanh.nam;
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
     } while (!isValidDateTime(cb.ngayGioKhoiHanh));
 
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -613,14 +597,12 @@ void ThemChuyenBay(PTRCB &dscb, DSMB &dsmb)
 
     // Nhập số hiệu máy bay
     char soHieuMB[16];
-    cout << "Nhap so hieu may bay: ";
 
-    cin.getline(soHieuMB, 16);
     bool valid1 = false;
     while (!valid1)
     {
         cout << "Nhap so hieu may bay (dang VN-<chu so>, ví du: VN-1234): ";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
         cin.getline(soHieuMB, sizeof(soHieuMB));
         RemoveAllSpaces(soHieuMB);
         // Chuyển toàn bộ thành in hoa để chống nhập vn-1234, Vn-1234...
@@ -667,7 +649,39 @@ void ThemChuyenBay(PTRCB &dscb, DSMB &dsmb)
         return;
     }
 
-    cb.ttcb = CON_VE;
+    int trangThai;
+    while (true)
+    {
+        cout << "Nhap trang thai chuyen bay (0=HUY_CHUYEN, 1=CON_VE, 2=HET_VE, 3=HOAN_TAT): ";
+        if (!(cin >> trangThai) || trangThai < 0 || trangThai > 3)
+        {
+            cout << "  >> Gia tri khong hop le. Vui long nhap lai.\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+        else
+        {
+            break;
+        }
+    }
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    switch (trangThai)
+    {
+    case 0:
+        cb.ttcb = HUY_CHUYEN;
+        break;
+    case 1:
+        cb.ttcb = CON_VE;
+        break;
+    case 2:
+        cb.ttcb = HET_VE;
+        break;
+    case 3:
+        cb.ttcb = HOAN_TAT;
+        break;
+    }
+
     strcpy(cb.soHieuMB, soHieuMB);
 
     // Cấp phát danh sách vé

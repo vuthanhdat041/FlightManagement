@@ -112,4 +112,47 @@ bool equalsIgnoreCase(const char *s1, const char *s2)
     return *s1 == *s2;
 }
 
+int KiemTraDoDai(char *str, int doDaiToiThieu, int doDaiToiDa)
+{
+    if (strlen(str) < doDaiToiThieu || strlen(str) > doDaiToiDa)
+        return 0;
+    return 1;
+}
+
+bool KiemTraTrung(int n, char *str_root, char *str_input)
+{
+    for (int i = 0; i < n; i++)
+    {
+        if (strcmp(str_root, str_input) == 0)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+bool KiemTraPhanSauLaChuSo(int startNumber, int endNumber, char *str)
+{
+    for (int i = startNumber; i < endNumber; i++)
+        if (!isdigit(static_cast<unsigned char>(str[i])))
+            return false;
+    return true;
+}
+// hàm chống nhập rỗng
+bool IsEmpty(const char s[])
+{
+    // nếu ký tự đầu là '\0' thì rỗng ngay
+    if (s[0] == '\0')
+        return true;
+    // duyệt từng ký tự
+    for (int i = 0; s[i] != '\0'; ++i)
+    {
+        char c = s[i];
+        // nếu gặp ký tự không phải space, tab, CR thì không rỗng
+        if (c != ' ' && c != '\t' && c != '\r' && c != '\n')
+        {
+            return false;
+        }
+    }
+    return true; // toàn space/tab/CR/NL
+}
 #endif // CHAR_UTILS_HPP
