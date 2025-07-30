@@ -1,6 +1,7 @@
 *
 !Library/
 !Library/*.hpp
-!src/*.hpp
+!src/
+!src/model.hpp
 !src/nhom17.cpp
 !.gitignore
