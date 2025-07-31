@@ -92,6 +92,8 @@ void NormalizeToUpperCase(char *str)
 
     str[j] = '\0';
 }
+
+// Cho tất cả các kí tự in hoa
 void UpperCase(char *str)
 {
     for (int i = 0; str[i]; i++)
@@ -99,7 +101,7 @@ void UpperCase(char *str)
         str[i] = toupper(str[i]);
     }
 }
-// so sánh chuỗi bỏ qua viết hoa & viết thường
+// So sánh chuỗi bỏ qua viết hoa & viết thường
 bool equalsIgnoreCase(const char *s1, const char *s2)
 {
     while (*s1 && *s2)
@@ -112,6 +114,7 @@ bool equalsIgnoreCase(const char *s1, const char *s2)
     return *s1 == *s2;
 }
 
+// Ép độ dài tối thiểu và tối đa
 int KiemTraDoDai(char *str, int doDaiToiThieu, int doDaiToiDa)
 {
     if (strlen(str) < doDaiToiThieu || strlen(str) > doDaiToiDa)
@@ -119,6 +122,7 @@ int KiemTraDoDai(char *str, int doDaiToiThieu, int doDaiToiDa)
     return 1;
 }
 
+// kiểm tra trùng chuỗi
 bool KiemTraTrung(int n, char *str_root, char *str_input)
 {
     for (int i = 0; i < n; i++)
@@ -130,6 +134,8 @@ bool KiemTraTrung(int n, char *str_root, char *str_input)
     }
     return false;
 }
+
+// Kiểm tra phần tử là chữ số ở vị trí nào
 bool KiemTraPhanSauLaChuSo(int startNumber, int endNumber, char *str)
 {
     for (int i = startNumber; i < endNumber; i++)
@@ -137,7 +143,7 @@ bool KiemTraPhanSauLaChuSo(int startNumber, int endNumber, char *str)
             return false;
     return true;
 }
-// hàm chống nhập rỗng
+// Hàm chống nhập rỗng
 bool IsEmpty(const char s[])
 {
     // nếu ký tự đầu là '\0' thì rỗng ngay

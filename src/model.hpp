@@ -13,6 +13,7 @@
 #define MAX_TEN_LENGTH 30   // độ dài chuỗi tên
 #define MAX_GIOI_TINH 4     // độ dài chuỗi giới tính
 
+const int SPACE_IN_ASCII = 32;
 // ===== May bay =====
 struct MayBay
 {
