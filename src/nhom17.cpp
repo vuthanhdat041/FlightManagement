@@ -7,6 +7,7 @@
 #include "../Library/char_utils.hpp"
 #include "model.hpp"
 #include "../Library/time_check.hpp"
+#include "dscb_io.hpp"
 
 using namespace std;
 // Ghi toàn bộ DSMB ra file DSMB.txt
